@@ -1,14 +1,38 @@
+import type { LinksFunction } from "@remix-run/node";
+import { json } from "@remix-run/node";
 import {
   Form,
+  Link,
   Links,
   Meta,
+  Outlet,
   Scripts,
   ScrollRestoration,
+  useLoaderData 
 } from "@remix-run/react";
 
+import { getContacts, createEmptyContact } from "./data";
+
+export const action = async ()=> {
+  const contact = await createEmptyContact();
+  return json ({contact});
+}
+
+export const loader = async () =>{
+  const contacts  = await  getContacts();
+  return json({contacts})
+}
+
+import appStylesHref from "./app.css?url"; 
+
+export const links: LinksFunction =() => [
+  {rel: "stylesheet", href: appStylesHref}
+];
+
 export default function App() {
+  const {contacts} = useLoaderData<typeof loader>();
   return (
-    <html lang="en">
+    <html lang="es">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -34,15 +58,34 @@ export default function App() {
             </Form>
           </div>
           <nav>
-            <ul>
-              <li>
-                <a href={`/contacts/1`}>Your Name</a>
-              </li>
-              <li>
-                <a href={`/contacts/2`}>Your Friend</a>
-              </li>
-            </ul>
+          {contacts.length ? (
+              <ul>
+                {contacts.map((contact) => (
+                  <li key={contact.id}>
+                    <Link to={`contacts/${contact.id}`}>
+                      {contact.first || contact.last ? (
+                      <>
+                      {contact.first} {contact.last}
+                      </>
+                      ) : (
+                      <i>sin nombre</i>
+                      )}{" "}
+                      {contact.favorite ? (
+                      <span>★</span>
+                      ) : null}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+              ) : (
+                <p>
+                <i>No contacts</i>
+                </p>
+              )}
           </nav>
+        </div>
+        <div id = "detail">
+          <Outlet/>
         </div>
 
         <ScrollRestoration />
